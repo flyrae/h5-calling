@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>表单示例</title>
+        <meta name="viewport" content="width=device-width,user-scalable=0,initial-scale=1,maximum-scale=1,minimum-scale=1"/>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+                font-size: 16px;
+                margin: 0;
+                padding: 0;
+                background-color: #f2f2f7;
+            }
+
+            h1 {
+                font-size: 24px;
+                margin: 16px;
+                color: #000;
+            }
+
+            #formTable {
+                margin: 16px auto;
+                max-width: 100%;
+                padding: 16px;
+                background-color: #fff;
+                border-radius: 12px;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            }
+
+            label {
+                display: block;
+                margin: 8px 0;
+                color: #8e8e93;
+            }
+
+            select, input[type="text"], input[type="password"] {
+                width: 100%;
+                padding: 12px;
+                border: none;
+                border-radius: 12px;
+                background-color: #f2f2f7;
+                color: #000;
+                font-size: 16px;
+                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+
+            button {
+                display: block;
+                width: 100%;
+                margin-top: 16px;
+                padding: 12px;
+                border: none;
+                border-radius: 12px;
+                background-color: #007aff;
+                color: #fff;
+                font-size: 16px;
+                cursor: pointer;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            }
+
+            button:hover {
+                background-color: #006be0;
+            }
+
+            #remoteContainer {
+              width: 100%;
+              height: 100%;
+              object-fit: fill;
+            }
+            #localContainer {
+              position: absolute;
+              width: 30%;
+              height: 30%;
+              right: 0;
+              bottom: 0;
+              z-index: 9;
+              object-fit: fill;
+            }
+        </style>
+        <script src="fhvideo-sdk-3.1.100030.js"></script>
+        <script>
+            function displaySelectedInitApi() {
+                const selectBox = document.getElementById("init-url-input");
+                const selectedValue = selectBox.options[selectBox.selectedIndex].value;
+                if (selectedValue === "manual") {
+                    document.getElementById("selected-init-url").value = document.getElementById("init-url-input-manual").value;
+                } else {
+                    document.getElementById("selected-init-url").value = selectedValue;
+                }
+            }
+
+            function handleSubmit(event) {
+                event.preventDefault();
+                const initUrlSelect = document.getElementById("init-url-input");
+                const initUrlInputManual = document.getElementById("init-url-input-manual");
+                const networkInput = document.getElementById("network-input");
+                const usernameInput = document.getElementById("username-input");
+                const passwordInput = document.getElementById("password-input");
+                const agentInput = document.getElementById("agent-input");
+                const rtcSelect = document.getElementById("rtc-select");
+                const protocolSelect = document.getElementById("protocol-select");
+
+                const selectedInitUrl = initUrlSelect.value === "manual" ? initUrlInputManual.value : initUrlSelect.value;
+
+                const formOptions = {
+                    initUrl: selectedInitUrl,
+                    network: networkInput.value,
+                    username: usernameInput.value,
+                    password: passwordInput.value,
+                    agent: agentInput.value,
+                    rtc: rtcSelect.value,
+                    protocol: protocolSelect.value,
+                };
+
+                console.log(JSON.stringify(formOptions));
+
+            }
+            stuauss = (event)=>{
+                document.getElementById('getStatus').innerHTML = JSON.stringify(event)
+            }
+
+            PEER_JOIN_fun = (tt)=>{
+                console.log('[FHVIDEO] PEER_JOIN_fun', tt)
+            }
+            PEER_leave_fun = (tt)=>{
+                console.log('[FHVIDEO] PEER_leave_fun', tt)
+            }
+            function init() {
+
+                const initUrlSelect = document.getElementById("init-url-input");
+                const initUrlInputManual = document.getElementById("init-url-input-manual");
+                const networkInput = document.getElementById("network-input");
+
+                const agentInput = document.getElementById("agent-input");
+                const rtcSelect = document.getElementById("rtc-select");
+                const protocolSelect = document.getElementById("protocol-select");
+
+                const selectedInitUrl = initUrlSelect.value === "manual" ? initUrlInputManual.value : initUrlSelect.value;
+                FHVideo.FHClient.on(FHVideo.CLIENT_EVENT.KICKED_OUT, (event)=>{
+                    console.log('[FHVIDEO]', event)
+                    FHVideo.FHClient.logout()
+                }
+                )
+
+                FHVideo.FHClient.on(FHVideo.CLIENT_EVENT.INIT_SUCCESS, (event)=>{
+                    console.log('[FHVIDEO]', event)
+
+                    document.getElementById('initCont').style.display = 'none';
+                    document.getElementById('loginCont').style.display = 'block'
+                }
+                )
+
+                FHVideo.FHClient.on(FHVideo.CLIENT_EVENT.SESSION_START, (event)=>{
+                    document.getElementById('getStatus').innerHTML = JSON.stringify(event)
+                }
+                )
+
+                FHVideo.FHClient.on(FHVideo.CLIENT_EVENT.SESSION_CLOSE, (event)=>{
+                    document.getElementById('getStatus').innerHTML = JSON.stringify(event)
+                }
+                )
+
+                //收到文字聊天消息
+                FHVideo.FHClient.on(FHVideo.CLIENT_EVENT.TEXT_CHAT, (event)=>{
+                    document.getElementById('textChat').innerHTML = JSON.stringify(event)
+                }
+                )
+
+                // // 自定义消息
+                // FHVideo.FHClient.on(FHVideo.CLIENT_EVENT.IM_CONTROL_MSG, (event) => {
+                //     document.getElementById('selfReversal').innerHTML = JSON.stringify(event)
+                // })
+
+                //收到推送消息
+                FHVideo.FHClient.on(FHVideo.CLIENT_EVENT.PUSH_CONTENT, (event)=>{
+                    document.getElementById('pushContext').innerHTML = JSON.stringify(event)
+                }
+                )
+
+                FHVideo.FHClient.on(FHVideo.CLIENT_EVENT.CAMERA_LIST, function(tt) {
+                    console.log(tt)
+                })
+                FHVideo.FHClient.on(FHVideo.CLIENT_EVENT.CAMERA_SWITCH_SUCCESS, function(tt) {
+                    console.log(tt)
+                })
+
+                FHVideo.FHClient.on(FHVideo.CLIENT_EVENT.VIDEO_NETWORK_QUALITY, function(tt) {
+                    console.log('VIDEO_NETWORK_QUALITY--', tt)
+                })
+
+                FHVideo.FHClient.on(FHVideo.CLIENT_EVENT.SCREEN_SHARE_STOP, function(tt) {
+                    console.log('[FHVIDEO] 停止屏幕共享')
+                })
+
+                FHVideo.FHClient.on(FHVideo.CLIENT_EVENT.TELLER_STATUS, function(tt) {
+                    console.log('[FHVIDEO] 会话中座席状态', tt)
+                })
+
+                FHVideo.FHClient.on(FHVideo.CLIENT_EVENT.MEMBER_JOIN, PEER_JOIN_fun)
+                FHVideo.FHClient.on(FHVideo.CLIENT_EVENT.MEMBER_LEAVE, PEER_leave_fun);
+                const initParams = {
+                    vcUrl: selectedInitUrl,
+                    usePriviteUrl: networkInput.value,
+                    usePriviteRtc: rtcSelect.value,
+                    rtcEnvironmental: protocolSelect.value
+                }
+
+                FHVideo.FHClient.setVideoDom({
+                    custom: 'remoteContainer',
+                    teller: 'localContainer',
+                    third: 'thirdVideo',
+                    customAux: 'customContainerShare',
+                    tellerAux: 'localContainerShare',
+                    thirdAux: 'thirdContainerShare'
+                });
+
+                FHVideo.FHClient.initClient(initParams);
+                // 初始化 ipAddress
+
+            }
+
+            function login() {
+                const usernameInput = document.getElementById("username-input");
+                console.log(usernameInput);
+                FHVideo.FHClient.login({
+                    cusUid: usernameInput.value
+                }).then(res=>{
+                    if (res.success) {
+                        document.getElementById('initCont').style.display = 'none';
+                        document.getElementById('loginCont').style.display = 'none';
+                        document.getElementById('setCont').style.display = 'block';
+                        console.log('[FHVIDEO]', res)
+                    }
+                }
+                ).catch(err=>{
+                    console.error('[FHVIDEO]', err)
+                }
+                )
+            }
+            function logout() {
+                FHVideo.FHClient.logout()
+            }
+
+            //获取dom方法
+            function $(id) {
+                return document.getElementById(id)
+            }
+
+            /***设置云代理***/
+            function handleSaveClound() {
+                handleSetProfile()
+                // const cloundOpen = document.getElementById('cloundOpen').value;
+                // const cloundUrl = document.getElementById('cloundUrl').value;
+                // const tutorialOpen = document.getElementById('tutorialOpen').value;
+
+                // const timeInfo = {
+                //     type: 0, //时间水印
+                //     timeFormat: document.getElementById('timeFormat').value,
+                //     color: document.getElementById('timeFormatColor').value,
+                //     fontSize: document.getElementById('timefontSize').value,
+                //     x: document.getElementById('timeX').value,
+                //     y: document.getElementById('timeY').value,
+                // }
+                // const textInfo = {
+                //     type: 2, //文字水印
+                //     text: document.getElementById('textCon').value,
+                //     color: document.getElementById('textColor').value,
+                //     fontSize: document.getElementById('textSize').value,
+                //     x: document.getElementById('textX').value,
+                //     y: document.getElementById('textY').value
+                // }
+                // const imageInfo = {
+                //     type: 3, //图片水印类型
+                //     alpha: document.getElementById('imgAlpha').value,
+                //     width: document.getElementById('imgSizeWidth').value,
+                //     height: document.getElementById('imgSizeHeight').value,
+                //     x: document.getElementById('imgX').value,
+                //     y: document.getElementById('imgY').value,
+                //     //imgPath: document.getElementById('imgPath').value,
+                // }
+
+                // const tutorialArry = [filterObj(timeInfo), filterObj(textInfo), filterObj(imageInfo)];
+                // console.log('水印配置数组', tutorialArry);
+                // FHVideo.FHClient.setTutorial({ isOpen: tutorialOpen == 1, tutorialArry });
+
+                // const obj = {
+                //     isOpen: cloundOpen == 1,
+                //     domain: cloundUrl
+                // }
+
+                // const isSave = FHVideo.FHClient.setCloundAgentConfig(obj);
+
+                // if (isSave) {
+                document.getElementById('initCont').style.display = 'none';
+                document.getElementById('loginCont').style.display = 'none';
+                document.getElementById('setCont').style.display = 'none';
+                document.getElementById('meetCont').style.display = 'block';
+                // }
+            }
+
+            // 视频参数设置提交
+            function handleSetProfile() {
+                const mirror = document.getElementById('mirror').value;
+                console.log('镜像mirror', mirror);
+                FHVideo.FHClient.setMirror({
+                    mirror: mirror == 1
+                })
+                const audioProfile = document.getElementById('audioProfile').value;
+                console.log('audioProfile', audioProfile);
+                FHVideo.FHClient.setAudioProfile({
+                    audioProfile
+                })
+
+                // const isVideoProfile = document.getElementById('isVideoProfile').value;
+                const videoProfile = document.getElementById('videoProfile').value;
+                console.log('videoProfile', videoProfile)
+                const videoProfileConfig = {
+                    videoProfile
+                }
+
+                console.log('视频流配置参数', videoProfileConfig)
+                FHVideo.FHClient.setVideoProfileConfig(videoProfileConfig)
+
+                // const isShareProfile = document.getElementById('isShareProfile').value;
+                const shareProfile = document.getElementById('shareProfile').value;
+                console.log('shareProfile', shareProfile);
+                const shareProfileConfig = {
+                    shareProfile
+                }
+                console.log('分享流配置参数', shareProfileConfig)
+                FHVideo.FHClient.setShareProfileConfig(shareProfileConfig)
+            }
+
+            /**
+     * 浏览器检测调试
+     * ***/
+            function handleCheckSystemRe() {
+                FHVideo.FHClient.checkSystemRe().then((checkResult)=>{
+                    console.log('浏览器检测调试', checkResult)
+                }
+                );
+            }
+
+            function handleCheckScreenShareSupported() {
+                const isScreen = FHVideo.FHClient.checkScreenShareSupported();
+                console.log('屏幕共享', isScreen)
+            }
+
+            function handleCheckSmallStreamSupported() {
+                const isSmallScreen = FHVideo.FHClient.checkSmallStreamSupported();
+                console.log('开启大小流模式', isSmallScreen)
+            }
+
+            // 呼叫相关
+        function callTeller() {
+            FHVideo.FHClient.on(FHVideo.CLIENT_EVENT.CALL_TELLER_STATE, stuauss);
+            const tellerId = document.getElementById('tellerId').value
+
+            FHVideo.FHClient.callTeller({
+                cusuid: tellerId,
+                linkType: '3'
+            }).then(res=>{
+                console.log('callTeller---res', res)
+            }
+            )
+            // 调用呼叫方法
+        }
+
+        function clearCallTeller() {
+            FHVideo.FHClient.clearCallTeller();
+        }
+
+        function handleStreamChange() {
+            const streamSel = document.getElementById('streamSel').value;
+            FHVideo.FHClient.setUpCustomRecordConfig({
+                inputStreamType: streamSel
+            })
+        }
+        function hangup_() {
+            FHVideo.FHClient.hangup()
+            // FHVideo.FHClient.hangup().then(() => {
+            // }); // 调用挂断方法
+            FHVideo.FHClient.off(FHVideo.CLIENT_EVENT.CALL_TELLER_STATE, stuauss)
+            FHVideo.FHClient.off(FHVideo.CLIENT_EVENT.MEMBER_JOIN, PEER_JOIN_fun)
+            FHVideo.FHClient.off(FHVideo.CLIENT_EVENT.MEMBER_LEAVE, PEER_leave_fun)
+        }
+
+        </script>
+    </head>
+    <body>
+        <h1>参数设置</h1>
+        <div id="formTable">
+            <div id="initCont">
+                <label for="init-url-input">初始化url：</label>
+                <select id="init-url-input" name="init-url" onchange="displaySelectedInitApi()">
+                    <option value="https://evvp.test.bankcomm.cn:8011">SIT</option>
+                    <option value="https://evvpuat.test.bankcomm.cn:8011">UAT</option>
+                    <option value="https://evvpu2.test.bankcomm.cn:8011">UAT2</option>
+                    <option value="https://evvpuatc.test.bankcomm.cn:8011">UATC</option>
+                    <option value="https://evvp.bankcomm.cn:8011">PRD</option>
+                    <option value="manual">手动输入</option>
+                </select>
+                <input type="text" id="init-url-input-manual" name="init-url-manual" style="display: none;">
+                <label for="selected-init-url">选中的初始化url：</label>
+                <input type="text" id="selected-init-url" name="selected-init-url" value="https://evvp.test.bankcomm.cn:8011" readonly>
+                <label for="network-input">内外网：</label>
+                <input type="text" id="network-input" name="network" value="0">
+                <label for="rtc-select">RTC选项：</label>
+                <select id="rtc-select" name="rtc">
+                    <option value="0">公有</option>
+                    <option value="1">私有</option>
+                </select>
+                <label for="protocol-select">音视频通讯协议：</label>
+                <select id="protocol-select" name="protocol">
+                    <option value="tcp">TCP</option>
+                    <option value="udp">UDP</option>
+                </select>
+                <button id="btnInit" onclick="init()">初始化</button>
+            </div>
+            <div id="loginCont" hidden>
+                <label for="username-input">用户名：</label>
+                <input type="text" id="username-input" name="username" value="test">
+                <label for="password-input">密码：</label>
+                <input type="password" id="password-input" name="password" value="123456">
+                <button id="btnLogin" onclick="login()">登录</button>
+            </div>
+            <div id="setCont" style="display: none">
+                <div>
+                    <div>
+                        <h2>音视频流的设置</h2>
+                        <p></p>
+                        <h4>视频镜像</h4>
+                        <span>是否开启本地视频镜像</span>
+                        <select id="mirror">
+                            <option value="1">开启</option>
+                            <option value="2" selected="selected">关闭</option>
+                        </select>
+                        <p style="color: red">*是否开启本地视频镜像预览。建议在使用前置摄像头时开启，使用后置摄像头时关闭。 注意 该参数只对本地预览有效，推流是没有镜像效果的。 该参数不适用于屏幕分享。</p>
+                        <p></p>
+                        <p></p>
+                        <h4>音频 Profile</h4>
+                        <span>音频</span>
+                        <select id="audioProfile">
+                            <option value="standard">采集率(48000)-声道(单声道)-码率kbps(40)</option>
+                            <option value="high">采集率(48000)-声道(单声道)-码率kbps(128)</option>
+                        </select>
+                        <p></p>
+                        <p></p>
+                        <h4>视频 Profile</h4>
+                        <p id="videoProfileSw">
+                            <span>视频</span>
+                            <select id="videoProfile" value="360p">
+                                <option value="180p">分辨率（宽 x 高）( 180 x 320 )-帧率（fps）(15)-码率kbps(350)</option>
+                                <option value="360p" selected="selected">分辨率（宽 x 高）( 360 x 640 )-帧率（fps）(15)-码率kbps(800)</option>
+                                <option value="720p">分辨率（宽 x 高）( 720 x 1280 )-帧率（fps）(15)-码率kbps(1500)</option>
+                                <option value="1080p">分辨率（宽 x 高）( 1080 x 1920 )-帧率（fps）(15)-码率kbps(2000)</option>
+                            </select>
+                        </p>
+                        <p></p>
+                        <p></p>
+                        <h4>屏幕分享 Profile</h4>
+                        <p id="shareProfileSw">
+                            <span>屏幕分享</span>
+                            <select id="shareProfile" value="1080p">
+                                <option value="1080p">分辨率（宽 x 高）(1920X1080 )-帧率（fps）(5)-码率kbps(1600)</option>
+                                <option value="480p">分辨率（宽 x 高）(640x480 )-帧率（fps）(5)-码率kbps(900)</option>
+                                <option value="480p_2">分辨率（宽 x 高）(640x480)-帧率（fps）(30)-码率kbps(1000)</option>
+                                <option value="720p">分辨率（宽 x 高）(1280 x 720)-帧率（fps）(5)-码率kbps(1200)</option>
+                                <option value="720p_2">分辨率（宽 x 高）(1280 x 720)-帧率（fps）(30)-码率kbps(3000)</option>
+                                <option value="1080p_2">分辨率（宽 x 高）(1920 x 1080)-帧率（fps）(30)-码率kbps(4000)</option>
+                            </select>
+                        </p>
+                        <p></p>
+                    </div>
+                </div>
+                <hr/>
+                <div>
+                    <h2>浏览器检测调试</h2>
+                    <p>
+                        <span>检测 TRTC Web SDK 是否支持当前浏览器</span>
+                        <button onclick="handleCheckSystemRe()">检测</button>
+                    </p>
+                    <p>
+                        <span>检测浏览器是否支持屏幕分享</span>
+                        <button onclick="handleCheckScreenShareSupported()">检测</button>
+                    </p>
+                    <p>
+                        <span>检测浏览器是否支持开启大小流模式</span>
+                        <button onclick="handleCheckSmallStreamSupported()">检测</button>
+                    </p>
+                </div>
+                <hr/>
+                <div>
+                    <button onclick="handleSaveClound()">保存</button>
+                    <button id="handupbtn" onclick="logout()">退出</button>
+                    <button onclick="handleLoginClick()">上一步</button>
+                </div>
+                <hr/>
+            </div>
+            <div id="meetCont" style="display: none">
+              <h4>坐席账号</h4>
+              <div>
+                  <p>
+                    <label for="label-tellerid">座席账号</label>
+                      <input type="text" id="tellerId" value="100_W006317">
+                  </p>
+                  <p>
+                      <button id="calltellerbtn" onclick="callTeller()">呼叫</button>
+                      <button onclick="hangup_()">取消</button>
+                      <button id="handupbtn" onclick="hangup_()">挂断</button>
+                  </p>
+                  <div id="videoContainer">
+                    <div id="remoteContainer"></div>                    
+                    <!-- <div style="display: flex;flex-direction: column;margin-left: 10px;"> -->
+                    <div id="localContainer"></div>
+                    </div>
+                  <p>
+                      客户收到座席状态：<b id="getStatus"></b>
+                  </p>
+              </div>
+            </div>
+        </div>
+        <script>
+            const initUrlSelect = document.getElementById("init-url-input");
+            const initUrlInputManual = document.getElementById("init-url-input-manual");
+            // initUrlInputManual.text=initUrlSelect.value;
+            initUrlSelect.addEventListener("change", function() {
+                if (initUrlSelect.value === "manual") {
+                    initUrlInputManual.style.display = "block";
+                } else {
+                    initUrlInputManual.style.display = "none";
+                    displaySelectedInitApi();
+                }
+            });
+
+            initUrlInputManual.addEventListener("input", function() {
+                displaySelectedInitApi();
+            });
+        </script>
+        <!-- Code injected by live-server -->
+        <script>
+            // <![CDATA[  <-- For SVG support
+            if ('WebSocket'in window) {
+                (function() {
+                    function refreshCSS() {
+                        var sheets = [].slice.call(document.getElementsByTagName("link"));
+                        var head = document.getElementsByTagName("head")[0];
+                        for (var i = 0; i < sheets.length; ++i) {
+                            var elem = sheets[i];
+                            var parent = elem.parentElement || head;
+                            parent.removeChild(elem);
+                            var rel = elem.rel;
+                            if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+                                var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+                                elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+                            }
+                            parent.appendChild(elem);
+                        }
+                    }
+                    var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+                    var address = protocol + window.location.host + window.location.pathname + '/ws';
+                    var socket = new WebSocket(address);
+                    socket.onmessage = function(msg) {
+                        if (msg.data == 'reload')
+                            window.location.reload();
+                        else if (msg.data == 'refreshcss')
+                            refreshCSS();
+                    }
+                    ;
+                    if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+                        console.log('Live reload enabled.');
+                        sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+                    }
+                }
+                )();
+            } else {
+                console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+            }
+            // ]]>
+        </script>
+        <!-- Code injected by live-server -->
+        <script>
+            // <![CDATA[  <-- For SVG support
+            if ('WebSocket'in window) {
+                (function() {
+                    function refreshCSS() {
+                        var sheets = [].slice.call(document.getElementsByTagName("link"));
+                        var head = document.getElementsByTagName("head")[0];
+                        for (var i = 0; i < sheets.length; ++i) {
+                            var elem = sheets[i];
+                            var parent = elem.parentElement || head;
+                            parent.removeChild(elem);
+                            var rel = elem.rel;
+                            if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+                                var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+                                elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+                            }
+                            parent.appendChild(elem);
+                        }
+                    }
+                    var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+                    var address = protocol + window.location.host + window.location.pathname + '/ws';
+                    var socket = new WebSocket(address);
+                    socket.onmessage = function(msg) {
+                        if (msg.data == 'reload')
+                            window.location.reload();
+                        else if (msg.data == 'refreshcss')
+                            refreshCSS();
+                    }
+                    ;
+                    if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+                        console.log('Live reload enabled.');
+                        sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+                    }
+                }
+                )();
+            } else {
+                console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+            }
+            // ]]>
+        </script>
+    </body>
+</html>
